@@ -1,6 +1,6 @@
 {
   "name": "pimatic-owjs",
-  "description": "The plugin description",
+  "description": "OWFS plugin for pimatic",
   "author": "Mikeš <m.spetik@gmail.com>",
   "main": "owjs",
   "files": [
