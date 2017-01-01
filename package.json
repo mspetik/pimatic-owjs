@@ -1,0 +1,45 @@
+{
+  "name": "pimatic-owjs",
+  "description": "The plugin description",
+  "author": "Mikeš <m.spetik@gmail.com>",
+  "main": "owjs",
+  "files": [
+    "README.md",
+    "LICENSE",
+    "owjs.coffee",
+    "owjs-config-schema.coffee",
+    "device-config-schema.coffee"
+  ],
+  "version": "0.1.2",
+  "homepage": "https://github.com/mspetik/pimatic-owjs",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/mspetik/pimatic-owjs.git"
+  },
+  "configSchema": "owjs-config-schema.coffee",
+  "dependencies": {
+    "owjs": ">0.1.0"
+  },
+  "peerDependencies": {
+    "pimatic": "0.9.*"
+  },
+  "engines": {
+    "node": ">0.8.x",
+    "npm": ">1.1.x"
+  },
+  "bugs": {
+    "url": "https://github.com/mspetik/pimatic-owjs/issues"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "pimatic",
+    "owserver",
+    "1-wire"
+  ],
+  "license": "SEE LICENSE IN LICENSE",
+  "_shasum": "bb4d48a8d0b9086eb195580e2d0e861e5d43d29d",
+  "_from": "pimatic-owjs@latest",
+  "devDependencies": {}
+}
