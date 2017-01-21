@@ -138,7 +138,7 @@ module.exports = (env) ->
       super()
 
     getPresence: () ->
-      return owclient.read(@uncached+@address'/sensed.'+@pio).then( (value) =>
+      return owclient.read(@uncached+@address+'/sensed.'+@pio).then( (value) =>
         owstate = value.value.trim()
 
         switch owstate
