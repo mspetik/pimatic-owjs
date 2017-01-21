@@ -17,10 +17,16 @@ module.exports = {
         description: "active is low?"
         type: "boolean"
         default: false
+      uncached:
+        type: "boolean"
+        default: true
+        description: " Use uncached data "
       interval:
         description: "Get state switch. 250ms is default update automaticaly"
         type: "integer"
         default: 250
+
+
   }
 
   OwjsPresenceSensor: {
@@ -39,10 +45,15 @@ module.exports = {
         description: "active low?"
         type: "boolean"
         default: false
+      uncached:
+        type: "boolean"
+        default: true
+        description: " Use uncached data "
       interval:
         description: "Get state switch. 250ms is default update automaticaly"
         type: "integer"
         default: 250
+
   }
   OwjsSensor: {
     title: "Owjs config options"
@@ -54,7 +65,12 @@ module.exports = {
       pio:
         description: "The pio pin"
         type: "string"
-        enum: ["fasttemp", "temperature" , "temperature12"]
+        enum: ["fasttemp", "temperature" , "temperature9" , "temperature10" , "temperature11" , "temperature12" ,
+                "humidity" , "HIH3600" , "HIH4000" , "HTM1735" , "VAD" , "VDD" ,]
+      uncached:
+        type: "boolean"
+        default: false
+        description: " Use uncached data "
       interval:
         description: "the time in ms, the command gets executed to get a new sensor value"
         type: "integer"
