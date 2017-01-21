@@ -31,7 +31,9 @@ Tested with device DS2405,DS2406,DS2408
     }
 
 ### OwjsSensor Device
+
 Tested with device DS18B20
+
     {
       "address": "28.54F81BE8E78D",
       "pio": "fasttemp",
@@ -42,7 +44,9 @@ Tested with device DS18B20
     }
 
 ### OwjsPresenceSensor Device
+
 Tested with device DS2405,DS2406,DS2408
+
     {
       "address": "12.54F81BE8E78D",
       "pio": "B",
