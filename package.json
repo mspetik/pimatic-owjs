@@ -10,7 +10,7 @@
     "owjs-config-schema.coffee",
     "device-config-schema.coffee"
   ],
-  "version": "0.1.3",
+  "version": "0.1.4",
   "homepage": "https://github.com/mspetik/pimatic-owjs",
   "repository": {
     "type": "git",
