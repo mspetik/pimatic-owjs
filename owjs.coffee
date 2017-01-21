@@ -61,7 +61,7 @@ module.exports = (env) ->
 
     
     getState: () ->
-      return owclient.read(@uncached+@address'/PIO.'+@pio).then( (value) =>
+      return owclient.read( @uncached+@address + '/PIO.' +@pio).then( (value) =>
         owstate = value.value.trim()
 
         switch owstate
