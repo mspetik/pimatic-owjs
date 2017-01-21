@@ -40,6 +40,9 @@ module.exports = (env) ->
       @address = @config.address
       @pio = @config.pio
       @inverted = @config.inverted
+      @uncached = @config.uncached
+
+      if @config.uncached then @uncached = "/uncached/" else @uncached = "/"
 
       @_state = lastState?.state?.value or off
 
@@ -58,7 +61,7 @@ module.exports = (env) ->
 
     
     getState: () ->
-      return owclient.read('/uncached/'+@address+'/PIO.'+@pio).then( (value) =>
+      return owclient.read(@uncached+@address'/PIO.'+@pio).then( (value) =>
         owstate = value.value.trim()
 
         switch owstate
@@ -72,28 +75,40 @@ module.exports = (env) ->
                 @_setState(on)
               else
                 @_setState(off)
-        )
+        ).catch( (error) =>
+              env.logger.error "error read state of OWFS switch #{@name}:", error.message
+              env.logger.debug error.stack
+            )
 
     turnOn: ->
       owclient.write('/'+@address+'/PIO.'+@pio, if @inverted then 0 else 1).then( () =>
           @_setState(on)
-        )
+        ).catch( (error) =>
+              env.logger.error "error write state ON of OWFS switch #{@name}:", error.message
+              env.logger.debug error.stack
+            )
 
     turnOff: ->
       owclient.write('/'+@address+'/PIO.'+@pio, if @inverted then 1 else 0).then( () =>
           @_setState(off)
-        )
+        ).catch( (error) =>
+              env.logger.error "error write state OFF of OWFS switch #{@name}:", error.message
+              env.logger.debug error.stack
+            )
 
     
     changeStateTo:  ->
-      owclient.read('/'+@address+'/PIO.'+@pio).then( (value) =>
+      owclient.read(@uncached+@address'/PIO.'+@pio).then( (value) =>
         state = (if value.value.trim() is "1" then on else off)
         if @inverted and state is on then state = off
         if @inverted and state is off then state = on
         
         owclient.write('/'+@address+'/PIO.'+@pio, if state then 0 else 1).then( () =>
           @_setState(state)
-        )
+        ).catch( (error) =>
+              env.logger.error "error change state of OWFS switch #{@name}:", error.message
+              env.logger.debug error.stack
+            )
       )
   class OwjsPresenceSensor extends env.devices.PresenceSensor
 
@@ -103,6 +118,8 @@ module.exports = (env) ->
       @address = @config.address
       @pio = @config.pio
       @inverted = @config.inverted
+
+      if @config.uncached then @uncached = "/uncached/" else @uncached = "/"
 
       @_presence = lastState?.presence?.value or false
 
@@ -121,7 +138,7 @@ module.exports = (env) ->
       super()
 
     getPresence: () ->
-      return owclient.read('/'+@address+'/sensed.'+@pio).then( (value) =>
+      return owclient.read(@uncached+@address'/sensed.'+@pio).then( (value) =>
         owstate = value.value.trim()
 
         switch owstate
@@ -135,7 +152,10 @@ module.exports = (env) ->
                 @_setPresence yes
               else
                 @_setPresence no
-      )
+      ).catch( (error) =>
+              env.logger.error "error read state of OWFS presence sensor #{@name}:", error.message
+              env.logger.debug error.stack
+            )
 
   class OwjsSensor extends env.devices.Sensor
 
@@ -144,6 +164,10 @@ module.exports = (env) ->
       @id = @config.id
       @address = @config.address
       @pio = @config.pio
+
+      if @pio is "HIH3600" then @pio = "HIH3600/humidity"
+      if @pio is "HIH4000" then @pio = "HIH4000/humidity"
+      if @pio is "HTM1735" then @pio = "HTM1735/humidity"
       
       attributeName = @config.attributeName
       @attributeValue = lastState?[attributeName]?.value
@@ -161,6 +185,8 @@ module.exports = (env) ->
 
       if @config.discrete?
         @attributes[attributeName].discrete = @config.discrete
+
+      if @config.uncached then @uncached = "/uncached/" else @uncached = "/"
 
       # Create a getter for this attribute
       getter = 'get' + attributeName[0].toUpperCase() + attributeName.slice(1)
@@ -184,13 +210,32 @@ module.exports = (env) ->
 
      
     _getUpdatedAttributeValue: () ->
-      return owclient.read('/'+@address+'/'+@pio).then( (value) =>
-        @attributeValue = value.value.trim()
-      
-        if @config.attributeType is "number" then @attributeValue = parseFloat(@attributeValue)
-        @emit @config.attributeName, @attributeValue
-        return @attributeValue
-      )
+      owclient.read( @uncached + @address + '/' +@pio ).then( (value) =>
+        @attributeValue = parseFloat(value.value.trim())
+        #env.logger.info "Read sensor #{@name}: #{@uncached+@address+'/'+@pio} "
+        if isNaN(@attributeValue)
+          owclient.read(@uncached+@address+'/'+@pio).then( (value) => #Re-reading sensor, probably outage bus
+            @attributeValue = parseFloat(value.value.trim())
+            #env.logger.error "second read sensor #{@name}: #{@attributeValue} "            
+            if isNaN(@attributeValue)
+              @attributeValue= -127 #Set sensor -127 is error value .
+              env.logger.error "error get sensor #{@name} . Set value -127 (this error value) "
+              @emit @config.attributeName, @attributeValue
+              return @attributeValue
+            else
+              @emit @config.attributeName, @attributeValue
+              return @attributeValue
+          ).catch( (error) =>
+              env.logger.error "second read is not ok #{@name}:", error.message
+              env.logger.debug error.stack
+            )
+        else
+          @emit @config.attributeName, @attributeValue
+          return @attributeValue
+      ).catch( (error) =>
+              env.logger.error "error read value of OWFS sensor #{@name}:", error.message
+              env.logger.debug error.stack
+            )
   
   # ###Finally
   # Create a instance of my plugin
