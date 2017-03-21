@@ -8,12 +8,17 @@ You  install owserver
 ```sh
 sudo apt-get install owserver ow-shell
 ```
-Edit file /etc/owfs.conf and change line 
-`server: port = localhost:4304`
+Edit file /etc/owfs.conf and change lines
+
+ `server: port = localhost:4304`
+ 
 to access only from localhost
-`server: port = 127.0.0.0:4304` 
+
+ `server: port = 127.0.0.0:4304`
+ 
 or access from all addresses
-`server: port = 0.0.0.0:4304` 
+
+ `server: port = 0.0.0.0:4304`
 
 Configuration
 -------------
@@ -29,8 +34,7 @@ Configuration
 Tested with device DS2405,DS2406,DS2408
 
     {
-      "address": "12.54F81BE8E78D",
-      "pio": "A",
+      "address": "12.54F81BE8E78D",      "pio": "A",
       "id": "onewire-switch",
       "name": "onewire switch",
       "class": "OwjsSwitch",
