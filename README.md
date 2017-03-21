@@ -4,10 +4,17 @@ This plugin basic for [Pimatic](http://pimatic.org)
 
 Install
 -------
-You  install and config /etc/owfs.conf
-```bash
+You  install owserver
+```sh
 sudo apt-get install owserver ow-shell
 ```
+Edit file /etc/owfs.conf and change line 
+`server: port = localhost:4304`
+to access only from localhost
+`server: port = 127.0.0.0:4304` 
+or access from all addresses
+`server: port = 0.0.0.0:4304` 
+
 Configuration
 -------------
 
