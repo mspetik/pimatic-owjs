@@ -66,7 +66,7 @@ module.exports = {
         description: "The pio pin"
         type: "string"
         enum: ["fasttemp", "temperature" , "temperature9" , "temperature10" , "temperature11" , "temperature12" ,
-                "humidity" , "HIH3600" , "HIH4000" , "HTM1735" , "VAD" , "VDD" ,]
+                "humidity" , "HIH3600" , "HIH4000" , "HTM1735" , "VAD" , "VDD" , "counter.A" , "counter.B"]
       uncached:
         type: "boolean"
         default: false
