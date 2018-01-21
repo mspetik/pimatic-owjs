@@ -8,39 +8,44 @@ module.exports = (env) ->
 
   owjs = require("owjs")
   
-  owclient = new (owjs.Client)(host: '127.0.0.1')
-  Promise.promisifyAll(owclient)
+  pluginConfigDef = require './owjs-config-schema'
+  
 
   class Owjs extends env.plugins.Plugin
 
     init: (app, @framework, @config) =>
     
       deviceConfigDef = require("./device-config-schema")
+      
+      #TODO Dodělat kontrolu připojení
+      @owclient = new (owjs.Client)(host: @config.host,port: @config.port)
+      env.logger.info "Reading data fom owserver IP or HOST:#{@config.host}  PORT:#{@config.port} "
 
       @framework.deviceManager.registerDeviceClass("OwjsSwitch", {
         configDef: deviceConfigDef.OwjsSwitch, 
-        createCallback: (config, lastState) => return new OwjsSwitch(config, lastState)
+        createCallback: (config, lastState) => return new OwjsSwitch(config , @ , lastState)
       })
 
       @framework.deviceManager.registerDeviceClass("OwjsPresenceSensor", {
         configDef: deviceConfigDef.OwjsPresenceSensor,
-        createCallback: (config, lastState) => return new OwjsPresenceSensor(config, lastState)
+        createCallback: (config, lastState) => return new OwjsPresenceSensor(config , @ , lastState)
       })
 
       @framework.deviceManager.registerDeviceClass("OwjsSensor", {
         configDef: deviceConfigDef.OwjsSensor,
-        createCallback: (config, lastState) => return new OwjsSensor(config, lastState)
+        createCallback: (config, lastState) => return new OwjsSensor(config , @ , lastState)
       })
 
   class OwjsSwitch extends env.devices.PowerSwitch
 
-    constructor: (@config,@lastState) ->
+    constructor: (@config,@plugin,@lastState) ->
       @name = @config.name
       @id = @config.id
       @address = @config.address
       @pio = @config.pio
       @inverted = @config.inverted
       @uncached = @config.uncached
+      @owclient = @plugin.owclient
 
       if @config.uncached then @uncached = "/uncached/" else @uncached = "/"
 
@@ -61,7 +66,7 @@ module.exports = (env) ->
 
     
     getState: () ->
-      return owclient.read( @uncached+@address + '/PIO.' +@pio).then( (value) =>
+      return @owclient.read( @uncached+@address + '/PIO.' +@pio).then( (value) =>
         owstate = value.value.trim()
 
         switch owstate
@@ -81,7 +86,7 @@ module.exports = (env) ->
             )
 
     turnOn: ->
-      owclient.write('/'+@address+'/PIO.'+@pio, if @inverted then 0 else 1).then( () =>
+      @owclient.write('/'+@address+'/PIO.'+@pio, if @inverted then 0 else 1).then( () =>
           @_setState(on)
         ).catch( (error) =>
               env.logger.error "error write state ON of OWFS switch #{@name}:", error.message
@@ -89,7 +94,7 @@ module.exports = (env) ->
             )
 
     turnOff: ->
-      owclient.write('/'+@address+'/PIO.'+@pio, if @inverted then 1 else 0).then( () =>
+      @owclient.write('/'+@address+'/PIO.'+@pio, if @inverted then 1 else 0).then( () =>
           @_setState(off)
         ).catch( (error) =>
               env.logger.error "error write state OFF of OWFS switch #{@name}:", error.message
@@ -98,12 +103,12 @@ module.exports = (env) ->
 
     
     changeStateTo:  ->
-      owclient.read(@uncached+@address'/PIO.'+@pio).then( (value) =>
+      @owclient.read(@uncached+@address'/PIO.'+@pio).then( (value) =>
         state = (if value.value.trim() is "1" then on else off)
         if @inverted and state is on then state = off
         if @inverted and state is off then state = on
         
-        owclient.write('/'+@address+'/PIO.'+@pio, if state then 0 else 1).then( () =>
+        @owclient.write('/'+@address+'/PIO.'+@pio, if state then 0 else 1).then( () =>
           @_setState(state)
         ).catch( (error) =>
               env.logger.error "error change state of OWFS switch #{@name}:", error.message
@@ -112,12 +117,13 @@ module.exports = (env) ->
       )
   class OwjsPresenceSensor extends env.devices.PresenceSensor
 
-    constructor: (@config, lastState) ->
+    constructor: (@config, @plugin ,lastState) ->
       @name = @config.name
       @id = @config.id
       @address = @config.address
       @pio = @config.pio
       @inverted = @config.inverted
+      @owclient = @plugin.owclient
 
       if @config.uncached then @uncached = "/uncached/" else @uncached = "/"
 
@@ -138,7 +144,7 @@ module.exports = (env) ->
       super()
 
     getPresence: () ->
-      return owclient.read(@uncached+@address+'/sensed.'+@pio).then( (value) =>
+      return @owclient.read(@uncached+@address+'/sensed.'+@pio).then( (value) =>
         owstate = value.value.trim()
 
         switch owstate
@@ -159,11 +165,12 @@ module.exports = (env) ->
 
   class OwjsSensor extends env.devices.Sensor
 
-    constructor: (@config, lastState) ->
+    constructor: (@config, @plugin ,lastState) ->
       @name = @config.name
       @id = @config.id
       @address = @config.address
       @pio = @config.pio
+      @owclient = @plugin.owclient
 
       if @pio is "HIH3600" then @pio = "HIH3600/humidity"
       if @pio is "HIH4000" then @pio = "HIH4000/humidity"
@@ -210,11 +217,11 @@ module.exports = (env) ->
 
      
     _getUpdatedAttributeValue: () ->
-      owclient.read( @uncached + @address + '/' +@pio ).then( (value) =>
+      @owclient.read( @uncached + @address + '/' +@pio ).then( (value) =>
         @attributeValue = parseFloat(value.value.trim())
         #env.logger.info "Read sensor #{@name}: #{@uncached+@address+'/'+@pio} "
         if isNaN(@attributeValue)
-          owclient.read(@uncached+@address+'/'+@pio).then( (value) => #Re-reading sensor, probably outage bus
+          @owclient.read(@uncached+@address+'/'+@pio).then( (value) => #Re-reading sensor, probably outage bus
             @attributeValue = parseFloat(value.value.trim())
             #env.logger.error "second read sensor #{@name}: #{@attributeValue} "            
             if isNaN(@attributeValue)
